@@ -12,7 +12,7 @@ permissions:
 
 jobs:
 
-  # ── 1. Secret Scanning ─────────────────────────────────────────
+  # - 1. Secret Scanning 
   secret-scan:
     name: Secret Scanning
     runs-on: ubuntu-latest
@@ -24,9 +24,9 @@ jobs:
         run: |
           docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest \
             detect --source=/repo --no-banner
-        # No secrets -> exit 0 -> PASS
+        
 
-  # ── 2. SAST — Semgrep ──────────────────────────────────────────
+  # - 2. SAST — Semgrep 
   sast-semgrep:
     name: SAST (Semgrep)
     runs-on: ubuntu-latest
@@ -43,7 +43,7 @@ jobs:
         with:
           sarif_file: semgrep.sarif
 
-  # ── 3. SAST — CodeQL ───────────────────────────────────────────
+  # - 3. SAST — CodeQL 
   sast-codeql:
     name: SAST (CodeQL)
     runs-on: ubuntu-latest
@@ -55,7 +55,7 @@ jobs:
           languages: python
       - uses: github/codeql-action/analyze@v3
 
-  # ── 4. SCA + ENFORCED GATE (always passes: no dependencies) ────
+  # - 4. SCA + ENFORCED GATE 
   sca:
     name: SCA (Trivy) + Gate
     runs-on: ubuntu-latest
@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Trivy fs scan -> SARIF
         continue-on-error: true
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -77,16 +77,16 @@ jobs:
         with:
           sarif_file: trivy-sca.sarif
       - name: Security Gate (ENFORCED)
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
           format: table
           severity: CRITICAL,HIGH
           ignore-unfixed: true
-          exit-code: '1'   # ENFORCED — passes because there are no third-party dependencies
+          exit-code: '1'   # ENFORCED 
 
-  # ── 5. Container Scan + SBOM ───────────────────────────────────
+  # - 5. Container Scan + SBOM 
   container:
     name: Container Scan + SBOM
     runs-on: ubuntu-latest
@@ -96,7 +96,7 @@ jobs:
         run: docker build -t demo-app:ci .
       - name: Trivy image scan -> SARIF
         continue-on-error: true
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: demo-app:ci
           format: sarif
@@ -117,7 +117,7 @@ jobs:
           format: cyclonedx-json
           artifact-name: sbom.cyclonedx.json
 
-  # ── 6. DAST — OWASP ZAP ────────────────────────────────────────
+  # - 6. DAST 
   dast:
     name: DAST (OWASP ZAP)
     runs-on: ubuntu-latest
@@ -147,7 +147,7 @@ jobs:
         if: always()
         run: docker rm -f demo-app || true
 
-  # ── 7. Deploy — runs because all gates pass ────────────────────
+  # - 7. Deploy 
   deploy:
     name: Deploy (gated)
     runs-on: ubuntu-latest
